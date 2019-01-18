@@ -11,6 +11,7 @@ using namespace std;
 #include "stb_image_write.h"
 
 const double eps = 1e-8;
+const double doubleINF = 1e5;
 
 class Tuple {
     public:
@@ -21,6 +22,14 @@ class Tuple {
             this -> z = z;
         }
 };
+
+Tuple average(const Tuple &t1, const Tuple &t2) {
+    Tuple t;
+    t.x = (t1.x + t2.x)/2;
+    t.y = (t1.y + t2.y)/2;
+    t.z = (t1.z + t2.z)/2;
+    return t;
+}
 
 typedef vector<vector<Tuple> > Image;
 typedef vector<vector<double> > Matrix;
@@ -81,12 +90,30 @@ Matrix deleteline(const Matrix &mat, const vector<int> &idx) {
     }
 }
 
+Image insert(const Image &img, const vector<int> &idx, const vector<Tuple> &pix) {
+    Image newimg = img;
+    for(int i = 0; i < img.size(); i++) {
+        newimg[i].insert(newimg[i].begin() + idx[i], pix[i]);
+    }
+    return newimg;
+}
+
 Image insert(const Image &img, const vector<int> &idx) {
     Image newimg = img;
     for(int i = 0; i < img.size(); i++) {
-        newimg[i].insert(newimg[i].begin() + idx[i], Tuple(255,0,0));
+        //newimg[i].insert(newimg[i].begin() + idx[i], average(newimg[i][idx[i]], newimg[i][idx[i]-1]));
+        newimg[i].insert(newimg[i].begin() + idx[i] + 1, average(newimg[i][idx[i]], newimg[i][idx[i]+1]));
     }
     return newimg;
+}
+
+Matrix insert(const Matrix &mat, const vector<int> &idx) {
+    Matrix newmat = mat;
+    for(int i = 0; i < mat.size(); i++){
+        newmat[i][idx[i]] = doubleINF;
+        newmat[i].insert(newmat[i].begin() + idx[i], doubleINF);
+    }
+    return newmat;
 }
 
 Matrix rgbToGray(const Image &img) {
@@ -142,7 +169,7 @@ vector<int> seamcarving(Matrix mat) {
         }
     }
     //printf("test7\n");
-    double minval = 1e5;
+    double minval = 1e9;
     int idx = -1;
     for (int j = 0; j < w; j++) {
         if(dp[h-1][j] < minval) {
@@ -157,14 +184,19 @@ vector<int> seamcarving(Matrix mat) {
     int id;
     for (int ctr = h-1; ctr > 0; ctr--) {
         id = res[ctr];
-        if(fabs(dp[ctr-1][id] + mat[ctr][id] - dp[ctr][id]) < eps) {
+        if(fabs(dp[ctr-1][id] + mat[ctr][id] - dp[ctr][id]) < 100 * eps) {
             res[ctr-1] = id;
-        } else if(id > 0 && fabs(dp[ctr-1][id-1] + mat[ctr][id] - dp[ctr][id]) < eps) {
+        } else if(id > 0 && fabs(dp[ctr-1][id-1] + mat[ctr][id] - dp[ctr][id]) < 100 * eps) {
             res[ctr-1] = id-1;
-        } else if(id < w-1 && fabs(dp[ctr-1][id+1] + mat[ctr][id] - dp[ctr][id]) < eps) {
+        } else if(id < w-1 && fabs(dp[ctr-1][id+1] + mat[ctr][id] - dp[ctr][id]) < 100 * eps) {
             res[ctr-1] = id+1;
         } else {
             printf("error happens!\n");
+            printf("%d %d\n", ctr, res[ctr]);
+            printf("%d\n ", dp[ctr-1][res[ctr]-1]);
+            printf("%d\n ", dp[ctr-1][res[ctr]]);
+            printf("%d\n ", dp[ctr-1][res[ctr]+1]);
+            printf("%d\n ", dp[ctr][res[ctr]]);
         }
     }
     return res;
@@ -203,33 +235,29 @@ int main() {
     //printf("test3\n");
     //printf("%lf\n", dx[0][0]);
 
-    int delcol = 200;
-    int delrow = 100;
+    int enlcol = 200;
     vector<vector<int> > idxcol;
-    vector<vector<int> > idxrow;
+    vector<vector<Tuple> > pixcol;
 
-    for(int i = 0; i < delcol; i++) {
+    for(int i = 0; i < enlcol; i++) {
         if (i % 10 == 0)
             printf("delete column: %d \n", i);
         vector<int> idx = seamcarving(dx);
         idxcol.push_back(idx);
+        /*
+        vector<Tuple> pixs;
+        for(int j = 0; j < h; j++) {
+            pixs.push_back(img_data[j][idx[j]]);
+        }
+        pixcol.push_back(pixs);
         img_data = deleteline(img_data, idx);
         dx = energy(rgbToGray(img_data));
+         */
+        dx = insert(dx, idx);
+        img_data = insert(img_data, idx);
+
     }
 
-    img_data = transpose(img_data);
-    dx = energy(rgbToGray(img_data));
-    printf("testtest\n");
-    for(int i = 0; i < delrow; i++) {
-        if (i % 10 == 0)
-            printf("delete row: %d \n", i);
-        vector<int> idx = seamcarving(dx);
-        idxrow.push_back(idx);
-        img_data = deleteline(img_data, idx);
-        dx = energy(rgbToGray(img_data));
-    }
-
-    img_data = transpose(img_data);
 
     //printf("test4\n");
     /*
@@ -241,24 +269,27 @@ int main() {
     }
     }
     */
-   
-    if(flag) {
-        img_data = transpose(img_data);
-        for(int i = idxrow.size()-1; i >= 0; i--) {
-            img_data = insert(img_data, idxrow[i]);
-        }
-        img_data = transpose(img_data);
-        for(int i = idxcol.size()-1; i >= 0; i--) {
-            img_data = insert(img_data, idxcol[i]);
-        }
-    }
+    //vector<Tuple> a = vector<Tuple>(h, Tuple(255,0,0));
+    //vector<Tuple> b = vector<Tuple>(h, Tuple(0,255,0));
 
+    /*
+    for(int i = idxcol.size()-1; i >= 0; i--) {
+        //img_data = insert(img_data, idxcol[i], pixcol[i]);      
+        //img_data = insert(img_data, idxcol[i], pixcol[i]);
+        img_data = insert(img_data, idxcol[i]);      
+        img_data = insert(img_data, idxcol[i]);
+        for(int j = 0; j < i; j++) {
+            for(int k = 0; k < idxcol[j].size(); k++) {
+                if (idxcol[j][k] >= idxcol[i][k])
+                idxcol[j][k] += 1;
+            }
+        }
+        
+    }
+     */
 
     //write image
-    if(!flag) {
-        w = w - delcol;
-        h = h - delrow;
-    }
+    w = w + enlcol;
     unsigned char * newimg;
     newimg = new unsigned char[w * h * 3];
     int counter = 0;
