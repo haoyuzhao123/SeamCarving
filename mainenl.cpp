@@ -103,6 +103,7 @@ Image insert(const Image &img, const vector<int> &idx) {
     for(int i = 0; i < img.size(); i++) {
         //newimg[i].insert(newimg[i].begin() + idx[i], average(newimg[i][idx[i]], newimg[i][idx[i]-1]));
         newimg[i].insert(newimg[i].begin() + idx[i] + 1, average(newimg[i][idx[i]], newimg[i][idx[i]+1]));
+        //newimg[i].insert(newimg[i].begin() + idx[i] + 1, Tuple(255,0,0));
     }
     return newimg;
 }
@@ -204,10 +205,10 @@ vector<int> seamcarving(Matrix mat) {
 
 int main() {
     // if we should mark the deleted lines
-    bool flag = true;
+    bool flag = false;
     //read image
     int w, h, bpp;
-    unsigned char * img = stbi_load("Images/1.jpg", &w, &h, &bpp, 3);
+    unsigned char * img = stbi_load("Images/5.jpg", &w, &h, &bpp, 3);
     int ctr = 0;
     printf("%d %d\n", w, h);
     vector<vector<Tuple> > img_data = vector<vector<Tuple> >();
@@ -300,7 +301,7 @@ int main() {
             newimg[counter++] = img_data[i][j].z;
         }
     }
-    stbi_write_png("test123.png", w, h, 3, newimg, w*3);
+    stbi_write_png("enl5.png", w, h, 3, newimg, w*3);
     delete [] newimg;
     return 0;
 }

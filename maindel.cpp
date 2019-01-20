@@ -172,10 +172,9 @@ vector<int> seamcarving(Matrix mat) {
 
 int main() {
     // if we should mark the deleted lines
-    bool flag = false;
-    //read image
+    bool flag = true;
     int w, h, bpp;
-    unsigned char * img = stbi_load("Images/1.jpg", &w, &h, &bpp, 3);
+    unsigned char * img = stbi_load("Images/7.jpg", &w, &h, &bpp, 3);
     int ctr = 0;
     printf("%d %d\n", w, h);
     vector<vector<Tuple> > img_data = vector<vector<Tuple> >();
@@ -203,8 +202,8 @@ int main() {
     //printf("test3\n");
     //printf("%lf\n", dx[0][0]);
 
-    int delcol = 200;
-    int delrow = 0;
+    int delcol = 60;
+    int delrow = 60;
     vector<vector<int> > idxcol;
     vector<vector<int> > idxrow;
 
@@ -268,7 +267,7 @@ int main() {
             newimg[counter++] = img_data[i][j].z;
         }
     }
-    stbi_write_png("test123.png", w, h, 3, newimg, w*3);
+    stbi_write_png("del7mark.png", w, h, 3, newimg, w*3);
     delete [] newimg;
     return 0;
 }

@@ -193,17 +193,17 @@ vector<int> seamcarving(Matrix mat) {
 }
 
 int main() {
-    // if we should protect the region:
-    bool flag = true;
+    // if we should mark:
+    bool flag = false;
     //true: protect
     //false: delete
     // if we should 
-    isProtected = true;
+    isProtected = false;
 
-    wmin = 200;
-    wmax = 400;
-    hmin = 300;
-    hmax = 500;
+    wmin = 50;
+    wmax = 150;
+    hmin = 550;
+    hmax = 750;
 
     //read image
     int w, h, bpp;
